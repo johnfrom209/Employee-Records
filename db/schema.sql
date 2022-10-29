@@ -34,8 +34,7 @@ CREATE TABLE employees (
     FOREIGN KEY (role_id)
     REFERENCES company_roles(id),
     FOREIGN KEY (manager_id)
-    REFERENCES employees(id)
-);
+    REFERENCES employees(id));
 
 -- SHOW COLUMNS FROM employees FROM companyx_db;
 -- SHOW COLUMNS FROM company_roles FROM companyx_db;
