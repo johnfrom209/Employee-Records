@@ -273,7 +273,7 @@ function addEmployeeInfo(dataRoles, dataManager) {
 
             let manager;
             if (answers.empManager === "None") {
-                manager = NULL;
+                manager = null;
             }
             else {
                 // loop the employee list but 
