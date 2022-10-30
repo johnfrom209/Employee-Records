@@ -59,13 +59,11 @@ function promptTheUser() {
                     console.log("Viewed all roles");
                     // call method to display all roles
                     showRoles();
-
                     break;
                 case "View all employees":
                     console.log('Viewed all employees');
                     //call method that displays all employees
                     showEmployees();
-
                     break;
                 case "Add a department":
                     console.log('Added department');
@@ -75,12 +73,12 @@ function promptTheUser() {
                 case "Add a role":
                     console.log('Added a role');
                     // call method that adds a role
-
+                    gettingDepartmentList();
                     break;
                 case "Add an employee":
                     console.log('Added employee');
                     // call method that adds an employee
-
+                    gettingRoleList();
                     break;
                 case "Update an employee role":
                     console.log('Updated employee role');
@@ -133,12 +131,25 @@ function addDepartment() {
         .then(answers => {
             db.query("INSERT INTO department SET ?", {
                 name_department: answers.departName
+            }, (err, res) => {
+                if (err) throw err;
+                promptTheUser();
             })
-            promptTheUser();
         })
 }
 
-function addRole() {
+function gettingDepartmentList() {
+    let departments = [];
+
+    db.query('SELECT * FROM department', function (err, results) {
+        for (let i = 0; i < results.length; i++) {
+            departments.push(results[i].name_department)
+        }
+        addRole(departments);
+    })
+}
+
+function addRole(list) {
 
     inquirer
         .prompt([
@@ -149,13 +160,144 @@ function addRole() {
             {
                 name: "roleSalary",
                 message: "Enter salary for the role."
+            },
+            {
+                type: 'list',
+                name: 'departmentName',
+                choices: list
             }
         ])
         .then(answers => {
-            db.query("INSERT INTO company_roles SET ?", {
-                title: answers.roleTitle,
-                salary: answers.roleSalary,
-            })
-            promptTheUser();
+            // need the department id and findIndex didn't work so for looping it
+            let departId;
+            for (let i = 0; i < list.length; i++) {
+                if (list[i] === answers.departmentName) {
+                    // need to add 1 since mysql tables start at 1 and arrays start at 0
+                    departId = i + 1;
+                }
+            }
+            // company_roles needs a num for salary
+            let numSalary = parseFloat(answers.roleSalary);
+            // console.log(answers.roleTitle);
+
+            dbAddRole(answers.roleTitle, numSalary, departId)
         })
+}
+
+function dbAddRole(roleTitle, roleSalary, departmentId) {
+
+    db.query("INSERT INTO company_roles SET ?", {
+        title: roleTitle,
+        salary: roleSalary,
+        department_id: departmentId
+    }, (err, res) => {
+        if (err) throw err;
+        promptTheUser();
+    }
+    )
+}
+
+function gettingRoleList() {
+
+    let roles = [];
+
+    db.query('SELECT * FROM company_roles', function (err, results) {
+        for (let i = 0; i < results.length; i++) {
+            roles.push(results[i].title)
+        }
+        gettingEmployeeList(roles);
+    }, (err, res) => {
+        if (err) throw err;
+        console.log(res);
+    })
+}
+
+function gettingEmployeeList(dataRoles) {
+    let list = ["None"];
+
+    db.query('SELECT * FROM employees', function (err, results) {
+        for (let i = 0; i < results.length; i++) {
+            list.push(results[i].name_first)
+        }
+        // return list;
+        addEmployeeInfo(dataRoles, list)
+    }, (err, res) => {
+        if (err) throw err;
+        console.log(res);
+    })
+
+}
+
+function addEmployeeInfo(dataRoles, dataManager) {
+
+    // let rolesList = gettingRoleList();
+    // console.log(rolesList);
+
+    // let employeesList = gettingEmployeeList();
+    // console.log(employeesList);
+
+    inquirer
+        .prompt([
+            {
+                name: 'empNameFirst',
+                message: 'What is the new employee\s first name?'
+            },
+            {
+                name: 'empNameLast',
+                message: 'What is the new emplyee\s last name?'
+            },
+            {
+                type: 'list',
+                name: 'empRole',
+                message: 'What is the employee\s role?',
+                choices: dataRoles
+            },
+            {
+                type: 'list',
+                name: 'empManager',
+                message: 'Employee\s manager?',
+                choices: dataManager
+            }]
+        )
+        .then(answers => {
+
+            let roleId;
+            // for loop to get the index of the roleId from answers
+            for (let i = 0; i < dataRoles.length; i++) {
+                if (answers.empRole === dataRoles[i]) {
+                    roleId = i + 1;
+                }
+            }
+            console.log("End of roldId and start of manager");
+            console.log(answers.empManager);
+
+            let manager;
+            if (answers.empManager === "None") {
+                manager = NULL;
+            }
+            else {
+                // loop the employee list but 
+                //since None is the first thing listed we don't need to add 1
+                // like I did in the add role
+                for (let j = 0; j < dataManager.length; j++) {
+                    if (answers.empManager === dataManager[j]) {
+                        manager = j;
+                    }
+                }
+            }
+
+            dbAddEmployee(answers.empNameFirst, answers.empNameLast, roleId, manager)
+
+        })
+}
+
+function dbAddEmployee(first, last, roleId, manager) {
+
+    db.query("INSERT INTO employees SET ?", {
+        name_first: first,
+        name_last: last,
+        role_id: roleId,
+        manager_id: manager
+    })
+    promptTheUser();
 }
