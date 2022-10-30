@@ -41,7 +41,6 @@ let questions = [
     }
 ]
 
-
 function promptTheUser() {
 
     inquirer
@@ -72,8 +71,21 @@ function promptTheUser() {
                     break;
                 case "Add a role":
                     console.log('Added a role');
-                    // call method that adds a role
-                    gettingDepartmentList();
+
+                    const promiseDepartmentList = new Promise((resolve, reject) => {
+                        let departmentList = [];
+
+                        db.query('SELECT * FROM department', function (err, results) {
+                            for (let i = 0; i < results.length; i++) {
+                                departmentList.push(results[i].name_department)
+                            }
+                        })
+                        resolve(departmentList);
+                    })
+                    promiseDepartmentList.then((dataList) => {
+                        addRole(dataList);
+                    })
+
                     break;
                 case "Add an employee":
                     console.log('Added employee');
@@ -138,17 +150,19 @@ function addDepartment() {
         })
 }
 
-function gettingDepartmentList() {
-    let departments = [];
+// function gettingDepartmentList() {
+//     let departments = [];
 
-    db.query('SELECT * FROM department', function (err, results) {
-        for (let i = 0; i < results.length; i++) {
-            departments.push(results[i].name_department)
-        }
-        addRole(departments);
-    })
-}
+//     db.query('SELECT * FROM department', function (err, results) {
+//         for (let i = 0; i < results.length; i++) {
+//             departments.push(results[i].name_department)
+//         }
+//         // addRole(departments);
+//         return departments
+//     })
+// }
 
+// this needs the list of Department names to get the id
 function addRole(list) {
 
     inquirer
