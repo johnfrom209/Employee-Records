@@ -41,8 +41,7 @@ let questions = [
     }
 ]
 
-let displayRoles = [];
-let displayEmployees = [];
+
 
 function promptTheUser() {
 
@@ -92,72 +91,14 @@ function promptTheUser() {
                     break;
                 case "Add an employee":
                     console.log('Added employee');
+
                     // call method that adds an employee
-                    // gettingRoleList();
-
-                    // to add employee we first need roleID and employeeList
-                    // so lets get the roleId array
-                    // let roles = [];
-                    // let displayEmployees = []
-                    // const promiseAddEmployee = new Promise((resolve, reject) => {
-                    //     let temp = [];
-                    //     db.query('SELECT * FROM company_roles', function (err, results) {
-                    //         for (let i = 0; i < results.length; i++) {
-                    //             temp.push(results[i].title)
-                    //         }
-                    //     })
-
-                    //     // this is giving me a list great
-                    //     resolve(temp) //, list
-                    // })
-                    //     .then((listedRoles) => {
-                    //         roles = listedRoles;
-                    //     });
-
-                    // const promise2 = new Promise((resolve, reject) => {
-
-                    //     let list = ["None"];
-
-                    //     db.query('SELECT * FROM employees', function (err, results) {
-                    //         for (let i = 0; i < results.length; i++) {
-                    //             list.push(results[i].name_first)
-                    //         }
-                    //     })
-
-                    //     resolve(list);
-                    // })
-                    //     .then((listedEmployees) => {
-                    //         displayEmployees = listedEmployees;
-                    //     })
-
-
-                    // // end goal is to call this and it works 
-                    // addEmployeeInfo(roles, displayEmployees);
-
-
-                    // Promise.resolve(gettingRoleList())
-                    //     .then(dataRoles => {
-
-                    //     })
-                    const promise5 = new Promise((resolve, reject) => {
-                        // call function for db query?
-                        // roleList
-                        gettingRoleList(displayRoles);
-                        gettingEmployeeList(displayEmployees);
-                        resolve();
-                    })
-                        // .then(() => {
-                        //     // gettingEmployeeList(displayEmployees);
-                        // })
-                        .then(() => {
-                            // call new employee questions
-                            addEmployeeInfo(displayRoles, displayEmployees);
-                        })
-
+                    addEmployeeInfo();
                     break;
                 case "Update an employee role":
                     console.log('Updated employee role');
                     // call method that updates an employee
+
 
 
                     break;
@@ -274,44 +215,47 @@ function dbAddRole(roleTitle, roleSalary, departmentId) {
     )
 }
 
-function gettingRoleList(array) {
-
-    let roles = [];
+async function gettingRoleList(newRoleList) {
 
     db.query('SELECT * FROM company_roles', function (err, results) {
         for (let i = 0; i < results.length; i++) {
-            roles.push(results[i].title)
+            newRoleList.push(results[i].title)
         }
-        // gettingEmployeeList(roles);
-        array = array.concat(roles)
-        console.log("concat list: " + array);
-        // return roles;
-    }, (err, res) => {
-        if (err) throw err;
-        console.log(res);
+        return;
     })
 }
 
-function gettingEmployeeList(dataRoles) {
-    let list = ["None"];
+async function gettingEmployeeList(newEmployeeList) {
+    newEmployeeList.push("None")
 
     db.query('SELECT * FROM employees', function (err, results) {
         for (let i = 0; i < results.length; i++) {
-            list.push(results[i].name_first)
+            newEmployeeList.push(results[i].name_first)
         }
-        dataRoles = dataRoles.concat(list);
-        console.log(dataRoles);
-        // return dataRoles;
-        // addEmployeeInfo(dataRoles, list)
-    }, (err, res) => {
-        if (err) throw err;
-        console.log(res);
+        return;
     })
-
 }
 
-function addEmployeeInfo(dataRoles, dataManager) {
+async function addEmployeeInfo() {
 
+    try {
+
+        let newEmployeeList = [];
+        await gettingEmployeeList(newEmployeeList);
+        let newRoleList = [];
+        await gettingRoleList(newRoleList);
+
+        dbAddEmployee(newRoleList, newEmployeeList);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+function dbAddEmployee(newRoleList, newEmployeeList) {
+
+    console.log("Inside dbAddEmployee");
+    console.log(newRoleList);
+    console.log(newEmployeeList);
     inquirer
         .prompt([
             {
@@ -326,21 +270,21 @@ function addEmployeeInfo(dataRoles, dataManager) {
                 type: 'list',
                 name: 'empRole',
                 message: 'What is the employee\s role?',
-                choices: dataRoles
+                choices: newRoleList
             },
             {
                 type: 'list',
                 name: 'empManager',
                 message: 'Employee\s manager?',
-                choices: dataManager
+                choices: newEmployeeList
             }]
         )
         .then(answers => {
 
             let roleId;
             // for loop to get the index of the roleId from answers
-            for (let i = 0; i < dataRoles.length; i++) {
-                if (answers.empRole === dataRoles[i]) {
+            for (let i = 0; i < newRoleList.length; i++) {
+                if (answers.empRole === newRoleList[i]) {
                     roleId = i + 1;
                 }
             }
@@ -355,25 +299,21 @@ function addEmployeeInfo(dataRoles, dataManager) {
                 // loop the employee list but 
                 //since None is the first thing listed we don't need to add 1
                 // like I did in the add role
-                for (let j = 0; j < dataManager.length; j++) {
-                    if (answers.empManager === dataManager[j]) {
+                // maybe instead of this we look up id with a dbquery that matches the manager name 
+                // I can see conflict with repeat names
+                for (let j = 0; j < newEmployeeList.length; j++) {
+                    if (answers.empManager === newEmployeeList[j]) {
                         manager = j;
                     }
                 }
             }
-
-            dbAddEmployee(answers.empNameFirst, answers.empNameLast, roleId, manager)
-
+            db.query("INSERT INTO employees SET ?", {
+                name_first: answers.empNameFirst,
+                name_last: answers.empNameLast,
+                role_id: roleId,
+                manager_id: manager
+            })
+            promptTheUser();
         })
-}
 
-function dbAddEmployee(first, last, roleId, manager) {
-
-    db.query("INSERT INTO employees SET ?", {
-        name_first: first,
-        name_last: last,
-        role_id: roleId,
-        manager_id: manager
-    })
-    promptTheUser();
 }
