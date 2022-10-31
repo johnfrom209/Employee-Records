@@ -41,6 +41,9 @@ let questions = [
     }
 ]
 
+let displayRoles = [];
+let displayEmployees = [];
+
 function promptTheUser() {
 
     inquirer
@@ -90,7 +93,67 @@ function promptTheUser() {
                 case "Add an employee":
                     console.log('Added employee');
                     // call method that adds an employee
-                    gettingRoleList();
+                    // gettingRoleList();
+
+                    // to add employee we first need roleID and employeeList
+                    // so lets get the roleId array
+                    // let roles = [];
+                    // let displayEmployees = []
+                    // const promiseAddEmployee = new Promise((resolve, reject) => {
+                    //     let temp = [];
+                    //     db.query('SELECT * FROM company_roles', function (err, results) {
+                    //         for (let i = 0; i < results.length; i++) {
+                    //             temp.push(results[i].title)
+                    //         }
+                    //     })
+
+                    //     // this is giving me a list great
+                    //     resolve(temp) //, list
+                    // })
+                    //     .then((listedRoles) => {
+                    //         roles = listedRoles;
+                    //     });
+
+                    // const promise2 = new Promise((resolve, reject) => {
+
+                    //     let list = ["None"];
+
+                    //     db.query('SELECT * FROM employees', function (err, results) {
+                    //         for (let i = 0; i < results.length; i++) {
+                    //             list.push(results[i].name_first)
+                    //         }
+                    //     })
+
+                    //     resolve(list);
+                    // })
+                    //     .then((listedEmployees) => {
+                    //         displayEmployees = listedEmployees;
+                    //     })
+
+
+                    // // end goal is to call this and it works 
+                    // addEmployeeInfo(roles, displayEmployees);
+
+
+                    // Promise.resolve(gettingRoleList())
+                    //     .then(dataRoles => {
+
+                    //     })
+                    const promise5 = new Promise((resolve, reject) => {
+                        // call function for db query?
+                        // roleList
+                        gettingRoleList(displayRoles);
+                        gettingEmployeeList(displayEmployees);
+                        resolve();
+                    })
+                        // .then(() => {
+                        //     // gettingEmployeeList(displayEmployees);
+                        // })
+                        .then(() => {
+                            // call new employee questions
+                            addEmployeeInfo(displayRoles, displayEmployees);
+                        })
+
                     break;
                 case "Update an employee role":
                     console.log('Updated employee role');
@@ -211,7 +274,7 @@ function dbAddRole(roleTitle, roleSalary, departmentId) {
     )
 }
 
-function gettingRoleList() {
+function gettingRoleList(array) {
 
     let roles = [];
 
@@ -219,7 +282,10 @@ function gettingRoleList() {
         for (let i = 0; i < results.length; i++) {
             roles.push(results[i].title)
         }
-        gettingEmployeeList(roles);
+        // gettingEmployeeList(roles);
+        array = array.concat(roles)
+        console.log("concat list: " + array);
+        // return roles;
     }, (err, res) => {
         if (err) throw err;
         console.log(res);
@@ -233,8 +299,10 @@ function gettingEmployeeList(dataRoles) {
         for (let i = 0; i < results.length; i++) {
             list.push(results[i].name_first)
         }
-        // return list;
-        addEmployeeInfo(dataRoles, list)
+        dataRoles = dataRoles.concat(list);
+        console.log(dataRoles);
+        // return dataRoles;
+        // addEmployeeInfo(dataRoles, list)
     }, (err, res) => {
         if (err) throw err;
         console.log(res);
@@ -243,12 +311,6 @@ function gettingEmployeeList(dataRoles) {
 }
 
 function addEmployeeInfo(dataRoles, dataManager) {
-
-    // let rolesList = gettingRoleList();
-    // console.log(rolesList);
-
-    // let employeesList = gettingEmployeeList();
-    // console.log(employeesList);
 
     inquirer
         .prompt([

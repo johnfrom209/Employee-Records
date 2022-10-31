@@ -31,10 +31,8 @@ CREATE TABLE employees (
     name_last VARCHAR(30) NOT NULL,
     role_id INT,
     manager_id INT NULL,
-    FOREIGN KEY (role_id)
-    REFERENCES company_roles(id),
-    FOREIGN KEY (manager_id)
-    REFERENCES employees(id));
+    FOREIGN KEY (role_id) REFERENCES company_roles(id),
+    FOREIGN KEY (manager_id) REFERENCES employees(id));
 
 -- SHOW COLUMNS FROM employees FROM companyx_db;
 -- SHOW COLUMNS FROM company_roles FROM companyx_db;
