@@ -77,27 +77,9 @@ function promptTheUser() {
                 case "Add a role":
                     console.log('Added a role');
                     addRole();
-                    // const promiseDepartmentList = new Promise((resolve, reject) => {
-                    //     let departmentList = [];
-
-                    //     db.query('SELECT * FROM department', function (err, results) {
-                    //         for (let i = 0; i < results.length; i++) {
-                    //             departmentList.push(results[i].name_department)
-                    //         }
-                    //     })
-                    //     resolve(departmentList);
-                    // })
-                    // promiseDepartmentList.then((dataList) => {
-                    //     addRole(dataList);
-                    // })
-
-                    // call the function and do async await there
-
-
                     break;
                 case "Add an employee":
                     console.log('Added employee');
-
                     // call method that adds an employee
                     addEmployeeInfo();
                     break;
@@ -105,8 +87,6 @@ function promptTheUser() {
                     console.log('Updated employee role');
                     // call method that updates an employee
                     updateEmployeeInfo();
-
-
                     break;
                 case "Exit":
                     console.log("You quit");
@@ -187,6 +167,7 @@ async function addRole() {
             {
                 type: 'list',
                 name: 'departmentName',
+                message: 'Choose department',
                 choices: deptChoices
             }
         ])
@@ -323,7 +304,39 @@ async function updateEmployeeInfo() {
         name: `${name_first}`,
         value: id
     }))
-    // change role 
-    // query the db with UPDATE
+
+    // get list of role
+    //db query for role list
+    let promptRolesdb = await db.promise().query('SELECT id, title FROM company_roles');
+    // console.log(promptRolesdb);
+
+    //map the db results for roles
+    let promptRoles = promptRolesdb[0].map(({ id, title }) => ({
+        name: `${title}`,
+        value: id
+    }))
+
+    // ask with inquirer
+    inquirer
+        .prompt([{
+            type: 'list',
+            name: 'employee',
+            message: 'Which employee is getting changed?',
+            choices: promptEmployees
+        },
+        {
+            type: 'list',
+            name: 'role',
+            message: 'Choose the new role',
+            choices: promptRoles
+        }]).then(answers => {
+
+            // now I have employee id(and first name but not needed anymore), and the new role
+            //update employee with the promptEmployees with the new role_id
+            // query the db with UPDATE
+            // change role 
+            db.promise().query(`UPDATE employees SET role_id=${parseInt(answers.role)} WHERE id=${parseInt(answers.employee)}`);
+            promptTheUser();
+        })
 
 }
