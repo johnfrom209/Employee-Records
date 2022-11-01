@@ -104,7 +104,7 @@ function promptTheUser() {
                 case "Update an employee role":
                     console.log('Updated employee role');
                     // call method that updates an employee
-
+                    updateEmployeeInfo();
 
 
                     break;
@@ -121,10 +121,6 @@ promptTheUser();
 function showDepartments() {
     db.query('SELECT * FROM department', function (err, results) {
         console.table(results);
-        // this gets me arry of the results
-        // let temp = [];
-        // temp = results;
-        // console.log(temp);
         //call questions again
         globalDepartments = results;
         console.log("GlobalDepartments" + globalDepartments);
@@ -166,21 +162,11 @@ function addDepartment() {
         })
 }
 
-function addGlobalDepartments() {
-    db.query('SELECT id AS value, name_department AS name FROM department', function (err, results) {
-        console.table(results);
-
-        console.log("Results: " + results);
-
-        globalDepartments = results[0];
-    })
-}
-
 async function addRole() {
 
     //call db for department list
     var globalDepartments2 = await db.promise().query('SELECT id, name_department FROM department');
-    console.log(globalDepartments2[0]);
+    // console.log(globalDepartments2[0]);
 
     //set deptChoices by mapping the keys: name, value with the query from db
     var deptChoices = globalDepartments2[0].map(({ id, name_department }) => ({
@@ -250,20 +236,29 @@ async function gettingEmployeeList(newEmployeeList) {
 
 async function addEmployeeInfo() {
 
-    try {
+    //db query for role list
+    let promptRolesdb = await db.promise().query('SELECT id, title FROM company_roles');
+    // console.log(promptRolesdb);
 
-        let newEmployeeList = [];
-        await gettingEmployeeList(newEmployeeList);
-        let newRoleList = [];
-        await gettingRoleList(newRoleList);
+    //map the db results for roles
+    let promptRoles = promptRolesdb[0].map(({ id, title }) => ({
+        name: `${title}`,
+        value: id
+    }))
 
-        dbAddEmployee(newRoleList, newEmployeeList);
-    } catch (err) {
-        console.log(err);
-    }
-}
+    //db query for employee list
+    let promptEmployeesdb = await db.promise().query('SELECT id, name_first FROM employees');
+    // console.log(promptEmployeesdb);
 
-function dbAddEmployee(newRoleList, newEmployeeList) {
+    // map the db results for employees
+    let promptEmployees = promptEmployeesdb[0].map(({ id, name_first }) => ({
+        name: `${name_first}`,
+        value: id
+    }))
+
+    // console.log(typeof promptEmployees);
+
+    promptEmployees.push({ name: 'None', value: 'null' });
 
     inquirer
         .prompt([
@@ -279,56 +274,55 @@ function dbAddEmployee(newRoleList, newEmployeeList) {
                 type: 'list',
                 name: 'empRole',
                 message: 'What is the employee\s role?',
-                choices: newRoleList
+                choices: promptRoles
             },
             {
                 type: 'list',
                 name: 'empManager',
                 message: 'Employee\s manager?',
-                choices: newEmployeeList
+                choices: promptEmployees
             }]
         )
         .then(answers => {
 
-            let roleId;
-            // for loop to get the index of the roleId from answers
-            for (let i = 0; i < newRoleList.length; i++) {
-                if (answers.empRole === newRoleList[i]) {
-                    roleId = i + 1;
-                }
+            if (answers.empManager === 'null') {
+                answers.empManager = null;
             }
-
-            let manager;
-            if (answers.empManager === "None") {
-                manager = null;
-            }
-            else {
-                // loop the employee list but 
-                //since None is the first thing listed we don't need to add 1
-                // like I did in the add role
-                // maybe instead of this we look up id with a dbquery that matches the manager name 
-                // I can see conflict with repeat names
-                console.log(answers.empManager);
-                for (let j = 0; j < newEmployeeList.length; j++) {
-                    if (answers.empManager === newEmployeeList[j]) {
-                        manager = j;
-                        break;
-                    }
-                }
-            }
-            db.query("INSERT INTO employees SET ?", {
-                name_first: answers.empNameFirst,
-                name_last: answers.empNameLast,
-                role_id: roleId,
-                manager_id: manager
-            })
-            promptTheUser();
+            console.log(answers.empManager);
+            //still need to add none and equal it to null
+            dbAddEmployee(answers.empNameFirst, answers.empNameLast, answers.empRole, answers.empManager)
         })
+
 }
 
-function updateEmployeeInfo() {
+function dbAddEmployee(newNameFirst, newNameLast, newRoleId, newManager) {
+
+    db.query("INSERT INTO employees SET ?", {
+        name_first: newNameFirst,
+        name_last: newNameLast,
+        role_id: newRoleId,
+        manager_id: newManager
+    }, (err, res) => {
+        if (err) throw err;
+        promptTheUser();
+    })
+    // promptTheUser();
+
+}
+
+async function updateEmployeeInfo() {
+
 
     // give list of employees
+    //db query for employee list
+    let promptEmployeesdb = await db.promise().query('SELECT id, name_first FROM employees');
+    // console.log(promptEmployeesdb);
+
+    // map the db results for employees
+    let promptEmployees = promptEmployeesdb[0].map(({ id, name_first }) => ({
+        name: `${name_first}`,
+        value: id
+    }))
     // change role 
     // query the db with UPDATE
 
