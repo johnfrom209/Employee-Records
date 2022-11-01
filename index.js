@@ -176,29 +176,17 @@ function addGlobalDepartments() {
     })
 }
 
-// const addGlobalDepartments = async () => {
-//     const departmentQuery = `SELECT id AS value, name_department AS name FROM department;`;
-//     const departments = await db.query(departmentQuery);
-//     return departments[0];
-// }
-
-// function gettingDepartmentList() {
-//     let departments = [];
-
-//     db.query('SELECT * FROM department', function (err, results) {
-//         for (let i = 0; i < results.length; i++) {
-//             departments.push(results[i].name_department)
-//         }
-//         // addRole(departments);
-//         return departments
-//     })
-// }
-
-// this needs the list of Department names to get the id
 async function addRole() {
+
     //call db for department list
-    // set global var for depart, role, employee
-    await addGlobalDepartments();
+    var globalDepartments2 = await db.promise().query('SELECT id, name_department FROM department');
+    console.log(globalDepartments2[0]);
+
+    //set deptChoices by mapping the keys: name, value with the query from db
+    var deptChoices = globalDepartments2[0].map(({ id, name_department }) => ({
+        name: `${name_department}`,
+        value: id
+    }))
 
     inquirer
         .prompt([
@@ -213,27 +201,16 @@ async function addRole() {
             {
                 type: 'list',
                 name: 'departmentName',
-                choices: globalDepartments
+                choices: deptChoices
             }
         ])
         .then(answers => {
 
-            console.log(answers.departName);
+            // this gives the key so no need to convert it
+            // console.log(answers.departmentName);
 
-
-            // need the department id and findIndex didn't work so for looping it
-            // let departId;
-            // for (let i = 0; i < nameFirstPrompt.length; i++) {
-            //     if (list[i] === answers.departmentName) {
-            //         // need to add 1 since mysql tables start at 1 and arrays start at 0
-            //         departId = i + 1;
-            //     }
-            // }
-            // company_roles needs a num for salary
-            // let numSalary = parseFloat(answers.roleSalary);
-            // console.log(answers.roleTitle);
-
-            // dbAddRole(answers.roleTitle, numSalary, departId)
+            //add role(w/ title and salary that references deparment id)
+            dbAddRole(answers.roleTitle, answers.roleSalary, answers.departmentName)
         })
 }
 
