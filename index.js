@@ -21,6 +21,9 @@ const db = mysql.createConnection(
     console.log('Connected to companyx_db.')
 )
 
+let globalDepartments = [];
+let globalRoles = [];
+let globalEmployees = [];
 
 // questions for the user
 let questions = [
@@ -73,20 +76,23 @@ function promptTheUser() {
                     break;
                 case "Add a role":
                     console.log('Added a role');
+                    addRole();
+                    // const promiseDepartmentList = new Promise((resolve, reject) => {
+                    //     let departmentList = [];
 
-                    const promiseDepartmentList = new Promise((resolve, reject) => {
-                        let departmentList = [];
+                    //     db.query('SELECT * FROM department', function (err, results) {
+                    //         for (let i = 0; i < results.length; i++) {
+                    //             departmentList.push(results[i].name_department)
+                    //         }
+                    //     })
+                    //     resolve(departmentList);
+                    // })
+                    // promiseDepartmentList.then((dataList) => {
+                    //     addRole(dataList);
+                    // })
 
-                        db.query('SELECT * FROM department', function (err, results) {
-                            for (let i = 0; i < results.length; i++) {
-                                departmentList.push(results[i].name_department)
-                            }
-                        })
-                        resolve(departmentList);
-                    })
-                    promiseDepartmentList.then((dataList) => {
-                        addRole(dataList);
-                    })
+                    // call the function and do async await there
+
 
                     break;
                 case "Add an employee":
@@ -115,7 +121,13 @@ promptTheUser();
 function showDepartments() {
     db.query('SELECT * FROM department', function (err, results) {
         console.table(results);
+        // this gets me arry of the results
+        // let temp = [];
+        // temp = results;
+        // console.log(temp);
         //call questions again
+        globalDepartments = results;
+        console.log("GlobalDepartments" + globalDepartments);
         promptTheUser();
     })
 }
@@ -154,6 +166,22 @@ function addDepartment() {
         })
 }
 
+function addGlobalDepartments() {
+    db.query('SELECT id AS value, name_department AS name FROM department', function (err, results) {
+        console.table(results);
+
+        console.log("Results: " + results);
+
+        globalDepartments = results[0];
+    })
+}
+
+// const addGlobalDepartments = async () => {
+//     const departmentQuery = `SELECT id AS value, name_department AS name FROM department;`;
+//     const departments = await db.query(departmentQuery);
+//     return departments[0];
+// }
+
 // function gettingDepartmentList() {
 //     let departments = [];
 
@@ -167,7 +195,10 @@ function addDepartment() {
 // }
 
 // this needs the list of Department names to get the id
-function addRole(list) {
+async function addRole() {
+    //call db for department list
+    // set global var for depart, role, employee
+    await addGlobalDepartments();
 
     inquirer
         .prompt([
@@ -182,23 +213,27 @@ function addRole(list) {
             {
                 type: 'list',
                 name: 'departmentName',
-                choices: list
+                choices: globalDepartments
             }
         ])
         .then(answers => {
+
+            console.log(answers.departName);
+
+
             // need the department id and findIndex didn't work so for looping it
-            let departId;
-            for (let i = 0; i < list.length; i++) {
-                if (list[i] === answers.departmentName) {
-                    // need to add 1 since mysql tables start at 1 and arrays start at 0
-                    departId = i + 1;
-                }
-            }
+            // let departId;
+            // for (let i = 0; i < nameFirstPrompt.length; i++) {
+            //     if (list[i] === answers.departmentName) {
+            //         // need to add 1 since mysql tables start at 1 and arrays start at 0
+            //         departId = i + 1;
+            //     }
+            // }
             // company_roles needs a num for salary
-            let numSalary = parseFloat(answers.roleSalary);
+            // let numSalary = parseFloat(answers.roleSalary);
             // console.log(answers.roleTitle);
 
-            dbAddRole(answers.roleTitle, numSalary, departId)
+            // dbAddRole(answers.roleTitle, numSalary, departId)
         })
 }
 
@@ -253,9 +288,6 @@ async function addEmployeeInfo() {
 
 function dbAddEmployee(newRoleList, newEmployeeList) {
 
-    console.log("Inside dbAddEmployee");
-    console.log(newRoleList);
-    console.log(newEmployeeList);
     inquirer
         .prompt([
             {
@@ -288,8 +320,6 @@ function dbAddEmployee(newRoleList, newEmployeeList) {
                     roleId = i + 1;
                 }
             }
-            console.log("End of roldId and start of manager");
-            console.log(answers.empManager);
 
             let manager;
             if (answers.empManager === "None") {
@@ -301,9 +331,11 @@ function dbAddEmployee(newRoleList, newEmployeeList) {
                 // like I did in the add role
                 // maybe instead of this we look up id with a dbquery that matches the manager name 
                 // I can see conflict with repeat names
+                console.log(answers.empManager);
                 for (let j = 0; j < newEmployeeList.length; j++) {
                     if (answers.empManager === newEmployeeList[j]) {
                         manager = j;
+                        break;
                     }
                 }
             }
@@ -315,5 +347,12 @@ function dbAddEmployee(newRoleList, newEmployeeList) {
             })
             promptTheUser();
         })
+}
+
+function updateEmployeeInfo() {
+
+    // give list of employees
+    // change role 
+    // query the db with UPDATE
 
 }
