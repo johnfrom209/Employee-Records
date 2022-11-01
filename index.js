@@ -101,15 +101,13 @@ promptTheUser();
 function showDepartments() {
     db.query('SELECT * FROM department', function (err, results) {
         console.table(results);
-        //call questions again
         globalDepartments = results;
-        console.log("GlobalDepartments" + globalDepartments);
         promptTheUser();
     })
 }
 
 function showRoles() {
-    db.query('SELECT * FROM company_roles', function (err, results) {
+    db.query('SELECT company_roles.id AS ID, company_roles.title AS Title, department.name_department AS Department, company_roles.salary AS Salary FROM company_roles JOIN department ON company_roles.department_id = department.id ', function (err, results) {
         console.table(results);
         //call questions again
         promptTheUser();
@@ -117,7 +115,19 @@ function showRoles() {
 }
 
 function showEmployees() {
-    db.query('SELECT * FROM employees', function (err, results) {
+    // db.query('SELECT * FROM employees JOIN company_roles ON company_roles.id = employees.role_id ', function (err, results) {
+    //     console.table(results);
+    //     //call questions again
+    //     promptTheUser();
+    // })
+
+    // try num 2
+    // db.query('SELECT employees.id AS ID, employees.name_first AS First, employees.name_last AS Last, employees.role_id AS Title From employees JOIN company_roles ON company_roles.title = employees.role_id', function (err, results) {
+    //     console.table(results);
+    //     promptTheUser();
+    // })
+
+    db.query('SELECT employees.id AS ID, employees.name_first AS First, employees.name_last AS Last, employees.role_id AS Title FROM employees', function (err, results) {
         console.table(results);
         //call questions again
         promptTheUser();
