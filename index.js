@@ -21,10 +21,6 @@ const db = mysql.createConnection(
     console.log('Connected to companyx_db.')
 )
 
-let globalDepartments = [];
-let globalRoles = [];
-let globalEmployees = [];
-
 // questions for the user
 let questions = [
     {
@@ -46,8 +42,6 @@ let questions = [
     }
 ]
 
-
-
 function promptTheUser() {
 
     inquirer
@@ -57,49 +51,48 @@ function promptTheUser() {
             // I don't use switch case so this is me going out of my way and using it
             switch (answers.operation) {
                 case "View all departments":
-                    console.log('We viewed all Departments');
+                    // console.log('We viewed all Departments');
                     // call method
                     showDepartments();
                     break;
                 case "View all roles":
-                    console.log("Viewed all roles");
+                    // console.log("Viewed all roles");
                     // call method to display all roles
                     showRoles();
                     break;
                 case "View all employees":
-                    console.log('Viewed all employees');
+                    // console.log('Viewed all employees');
                     //call method that displays all employees
                     showEmployees();
                     break;
                 case "Add a department":
-                    console.log('Added department');
+                    // console.log('Added department');
                     // call method that adds a department to db
                     addDepartment();
                     break;
                 case "Add a role":
-                    console.log('Added a role');
+                    // console.log('Added a role');
                     addRole();
                     break;
                 case "Add an employee":
-                    console.log('Added employee');
+                    // console.log('Added employee');
                     // call method that adds an employee
                     addEmployeeInfo();
                     break;
                 case "Update an employee role":
-                    console.log('Updated employee role');
+                    // console.log('Updated employee role');
                     // call method that updates an employee
                     updateEmployeeInfo();
                     break;
                 case "View Budget by department":
-                    console.log('Checking budget');
+                    // console.log('Checking budget');
                     departmentBudget();
                     break;
                 case "Update employee Manager":
-                    console.log("Updating Manager");
+                    // console.log("Updating Manager");
                     updateManager();
                 case "Exit":
                     console.log("You quit");
-                    return;
                     break;
             }
         });
@@ -210,27 +203,6 @@ function dbAddRole(roleTitle, roleSalary, departmentId) {
         promptTheUser();
     }
     )
-}
-
-async function gettingRoleList(newRoleList) {
-
-    db.query('SELECT * FROM company_roles', function (err, results) {
-        for (let i = 0; i < results.length; i++) {
-            newRoleList.push(results[i].title)
-        }
-        return;
-    })
-}
-
-async function gettingEmployeeList(newEmployeeList) {
-    newEmployeeList.push("None")
-
-    db.query('SELECT * FROM employees', function (err, results) {
-        for (let i = 0; i < results.length; i++) {
-            newEmployeeList.push(results[i].name_first)
-        }
-        return;
-    })
 }
 
 async function addEmployeeInfo() {
