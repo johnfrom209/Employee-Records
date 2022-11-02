@@ -39,6 +39,7 @@ let questions = [
             'Add a role',
             'Add an employee',
             'Update an employee role',
+            'View Budget by department',
             'Exit'
         ]
     }
@@ -88,6 +89,10 @@ function promptTheUser() {
                     // call method that updates an employee
                     updateEmployeeInfo();
                     break;
+                case "View Budget by department":
+                    console.log('Checking budget');
+                    departmentBudget();
+                    break;
                 case "Exit":
                     console.log("You quit");
                     return;
@@ -115,19 +120,18 @@ function showRoles() {
 }
 
 function showEmployees() {
-    // db.query('SELECT * FROM employees JOIN company_roles ON company_roles.id = employees.role_id ', function (err, results) {
-    //     console.table(results);
-    //     //call questions again
-    //     promptTheUser();
-    // })
 
-    // try num 2
-    // db.query('SELECT employees.id AS ID, employees.name_first AS First, employees.name_last AS Last, employees.role_id AS Title From employees JOIN company_roles ON company_roles.title = employees.role_id', function (err, results) {
-    //     console.table(results);
-    //     promptTheUser();
-    // })
-
-    db.query('SELECT employees.id AS ID, employees.name_first AS First, employees.name_last AS Last, employees.role_id AS Title FROM employees', function (err, results) {
+    // link the foreign key's to the tables primary keys
+    // employee id, first, last, role title, department, salary,(still need to add manager) manager
+    db.query(`SELECT employees.id AS ID, employees.name_first AS First,
+            employees.name_last AS Last, company_roles.title AS Title, 
+            department.name_department AS Department, company_roles.salary AS Salary,
+            CONCAT(leader.name_first, " ", leader.name_last) AS Manager 
+            FROM employees JOIN company_roles 
+            ON employees.role_id = company_roles.id 
+            JOIN department 
+            ON company_roles.department_id = department.id
+            LEFT JOIN employees AS leader ON leader.id = employees.manager_id`, function (err, results) {
         console.table(results);
         //call questions again
         promptTheUser();
