@@ -40,6 +40,7 @@ let questions = [
             'Add an employee',
             'Update an employee role',
             'View Budget by department',
+            'Update employee Manager',
             'Exit'
         ]
     }
@@ -93,6 +94,9 @@ function promptTheUser() {
                     console.log('Checking budget');
                     departmentBudget();
                     break;
+                case "Update employee Manager":
+                    console.log("Updating Manager");
+                    updateManager();
                 case "Exit":
                     console.log("You quit");
                     return;
@@ -242,12 +246,12 @@ async function addEmployeeInfo() {
     }))
 
     //db query for employee list
-    let promptEmployeesdb = await db.promise().query('SELECT id, name_first FROM employees');
+    let promptEmployeesdb = await db.promise().query(`SELECT id, CONCAT(name_first, " ", name_Last) AS Name FROM employees`);
     // console.log(promptEmployeesdb);
 
     // map the db results for employees
-    let promptEmployees = promptEmployeesdb[0].map(({ id, name_first }) => ({
-        name: `${name_first}`,
+    let promptEmployees = promptEmployeesdb[0].map(({ id, Name }) => ({
+        name: `${Name}`,
         value: id
     }))
 
@@ -283,7 +287,7 @@ async function addEmployeeInfo() {
             if (answers.empManager === 'null') {
                 answers.empManager = null;
             }
-            console.log(answers.empManager);
+            // console.log(answers.empManager);
             //still need to add none and equal it to null
             dbAddEmployee(answers.empNameFirst, answers.empNameLast, answers.empRole, answers.empManager)
         })
@@ -330,6 +334,8 @@ async function updateEmployeeInfo() {
         value: id
     }))
 
+    // console.log(promptRoles);
+
     // ask with inquirer
     inquirer
         .prompt([{
@@ -353,4 +359,71 @@ async function updateEmployeeInfo() {
             promptTheUser();
         })
 
+}
+
+async function departmentBudget() {
+    // ask which department then send them a list
+    //db query for department list
+    let promptDepartmentdb = await db.promise().query('SELECT id, name_department FROM department');
+    // console.log(promptDepartmentdb);
+
+    // map the db results for employees
+    let promptDepartment = promptDepartmentdb[0].map(({ id, name_department }) => ({
+        name: `${name_department}`,
+        value: id
+    }))
+    // console.log(promptDepartment);
+
+    inquirer
+        .prompt([{
+            type: 'list',
+            name: 'department',
+            message: 'Which department budget would you like to see?',
+            choices: promptDepartment
+        }]).then(answers => {
+            let temp = parseInt(answers.department);
+
+            db.query(`SELECT department.name_department AS Department,
+                SUM(company_roles.salary) AS Salary FROM department 
+                JOIN company_roles ON company_roles.department_id = department.id
+                JOIN employees ON employees.role_id = company_roles.id
+                WHERE department.id = ${temp}`, function (err, results) {
+                console.table(results)
+                promptTheUser();
+            })
+        })
+}
+
+async function updateManager() {
+
+    let promptManagerdb = await db.promise().query(`SELECT id, CONCAT(name_first, " ", name_Last) AS Name FROM employees`);
+    // console.log(promptDepartmentdb);
+
+    // map the db results for employees
+    let promptManager = promptManagerdb[0].map(({ id, Name }) => ({
+        name: `${Name}`,
+        value: id
+    }))
+
+    inquirer
+        .prompt([{
+            type: 'list',
+            name: 'employee',
+            message: 'Which employee is getting a new manager?',
+            choices: promptManager
+        },
+        {
+            type: 'list',
+            name: 'employeeManager',
+            message: 'Who is their new manager?',
+            choices: promptManager
+        }]).then(answers => {
+            let tempManager = parseInt(answers.employeeManager);
+            let tempEmployee = parseInt(answers.employee);
+
+            db.query(`UPDATE employees SET employees.manager_id=${tempManager} WHERE employees.id=${tempEmployee}`, function (err, results) {
+
+                promptTheUser();
+            })
+        })
 }
